@@ -1,6 +1,13 @@
-import { stripCodeFences, ensureRenderCall } from './generator';
 import { withModelFallback } from './fallback';
-import { createSseParser, anthropicDelta, googleDelta, encodeEvent } from './stream';
+import { toErrorBody } from './errors';
+import {
+  anthropicDelta,
+  googleDelta,
+  encodeEvent,
+  readDeltas,
+  generateEvents,
+  type Delta,
+} from './stream';
 
 // 우선순위 순서. 앞 모델이 실패하면 다음 모델로 폴백한다.
 const GOOGLE_MODELS = ['gemini-3.1-flash-lite', 'gemini-3.5-flash'];
@@ -66,13 +73,6 @@ function resolveApiKey(provider: Provider, clientKey?: string): string | null {
   return clientKey || ENV_KEYS[provider] || null;
 }
 
-const TRUNCATED_MESSAGE = '생성된 코드가 너무 길어 잘렸습니다. 더 간단한 컴포넌트를 요청해주세요.';
-
-interface Delta {
-  text: string;
-  truncated: boolean;
-}
-
 interface UpstreamStream {
   response: Response;
   extract: (payload: string) => Delta;
@@ -101,10 +101,7 @@ async function openAnthropicStream(prompt: string, apiKey: string): Promise<Upst
     throw new Error(`Claude API error: ${response.status}`);
   }
 
-  return {
-    response,
-    extract: (payload) => ({ text: anthropicDelta(payload), truncated: false }),
-  };
+  return { response, extract: anthropicDelta };
 }
 
 async function openGoogleModelStream(
@@ -135,54 +132,21 @@ async function openGoogleStream(prompt: string, apiKey: string): Promise<Upstrea
   return withModelFallback(GOOGLE_MODELS, (model) => openGoogleModelStream(prompt, apiKey, model));
 }
 
-async function* readDeltas({ response, extract }: UpstreamStream): AsyncGenerator<Delta> {
-  const parse = createSseParser();
-  const decoder = new TextDecoder();
-
-  for await (const chunk of response.body as unknown as AsyncIterable<Uint8Array>) {
-    for (const payload of parse(decoder.decode(chunk, { stream: true }))) {
-      yield extract(payload);
-    }
-  }
-}
-
-function toErrorBody(message: string): { error: string; status: number } {
-  if (message.includes('503')) {
-    return { error: 'API 서버가 일시적으로 과부하 상태입니다. 잠시 후 다시 시도해주세요.', status: 503 };
-  }
-  if (message.includes('429')) {
-    return { error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.', status: 429 };
-  }
-  return { error: message, status: 500 };
-}
-
+// 스트림 변환 로직은 stream.ts(generateEvents)에 있다. 여기에는 로직을 두지 않는다.
 function streamResponse(upstream: UpstreamStream, provider: Provider): Response {
   const encoder = new TextEncoder();
   let cancelled = false;
 
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const send = (event: unknown) => {
-        if (!cancelled) controller.enqueue(encoder.encode(encodeEvent(event)));
-      };
+      const chunks = upstream.response.body as unknown as AsyncIterable<Uint8Array>;
+      const events = generateEvents(readDeltas(chunks, upstream.extract), provider);
 
       try {
-        let full = '';
-        for await (const { text, truncated } of readDeltas(upstream)) {
+        for await (const event of events) {
           if (cancelled) return;
-          if (text) {
-            full += text;
-            send({ type: 'delta', text });
-          }
-          // MAX_TOKENS 잘림 감지는 Google 경로에만 있다 (Anthropic은 의도적으로 제외).
-          if (provider === 'google' && truncated) {
-            throw new Error(TRUNCATED_MESSAGE);
-          }
+          controller.enqueue(encoder.encode(encodeEvent(event)));
         }
-        send({ type: 'done', code: ensureRenderCall(stripCodeFences(full)) });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        send({ type: 'error', error: toErrorBody(message).error });
       } finally {
         if (!cancelled) controller.close();
       }

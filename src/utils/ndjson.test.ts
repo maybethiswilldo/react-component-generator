@@ -18,6 +18,11 @@ describe('createNdjsonParser', () => {
     expect(parse('1}\n')).toEqual([{ n: 1 }]);
   });
 
+  it('깨진 JSON 줄은 건너뛰고 나머지 줄은 반환한다', () => {
+    const parse = createNdjsonParser();
+    expect(parse('{"n":1}\n<html>oops\n{"n":2}\n')).toEqual([{ n: 1 }, { n: 2 }]);
+  });
+
   it('빈 줄은 무시한다', () => {
     const parse = createNdjsonParser();
     expect(parse('\n{"n":1}\n\n')).toEqual([{ n: 1 }]);

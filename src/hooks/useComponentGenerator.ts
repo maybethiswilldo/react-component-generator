@@ -2,12 +2,8 @@ import { useState, useCallback } from 'react';
 import type { GeneratedComponent, Provider } from '../types';
 import { STORAGE_KEYS, parseComponents } from '../utils/storage';
 import { createNdjsonParser } from '../utils/ndjson';
+import { applyStreamEvent, finalCodeOf, initialStreamState } from '../utils/streamEvents';
 import { useLocalStorageState } from './useLocalStorageState';
-
-type StreamEvent =
-  | { type: 'delta'; text: string }
-  | { type: 'done'; code: string }
-  | { type: 'error'; error: string };
 
 interface UseComponentGeneratorReturn {
   components: GeneratedComponent[];
@@ -50,31 +46,23 @@ export function useComponentGenerator(): UseComponentGeneratorReturn {
       const parse = createNdjsonParser();
       const decoder = new TextDecoder();
       const reader = res.body.getReader();
-      let finalCode: string | null = null;
+      let state = initialStreamState;
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        for (const event of parse(decoder.decode(value, { stream: true })) as StreamEvent[]) {
-          if (event.type === 'delta') {
-            setStreaming((prev) => prev && { ...prev, code: prev.code + event.text });
-          } else if (event.type === 'error') {
-            throw new Error(event.error);
-          } else {
-            finalCode = event.code;
-          }
+        for (const event of parse(decoder.decode(value, { stream: true }))) {
+          state = applyStreamEvent(state, event);
         }
-      }
-
-      if (finalCode === null) {
-        throw new Error('응답이 중간에 끊겼습니다. 다시 시도해주세요.');
+        const { code } = state;
+        setStreaming((prev) => prev && { ...prev, code });
       }
 
       const newComponent: GeneratedComponent = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         prompt,
-        code: finalCode,
+        code: finalCodeOf(state),
         createdAt: new Date(),
       };
 
