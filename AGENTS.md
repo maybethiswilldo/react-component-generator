@@ -39,6 +39,14 @@
 - 테스트가 있는 곳: `server/generator.ts`, `server/fallback.ts`, `src/components/PromptInput.tsx`. 테스트가 없는 곳: `server/index.ts`, `src/App.tsx`, `src/hooks/useComponentGenerator.ts`, `LivePreview`, `CodeView`, `ComponentCard`.
 - 테스트 가능한 로직은 `server/index.ts`가 아니라 부수효과 없는 순수 모듈에 둔다 (`server/generator.ts:1-2`). `server/index.ts`는 import 시 `Bun.serve`가 실행된다 (`server/index.ts:138`).
 
+### Sensitive Files (접근 차단)
+
+- 에이전트는 민감 파일을 읽거나 수정하지 않는다. 대상: `.env`, `.env.local`, `.env.*.local`, `.env.development`, `.env.production`, `.env.test`, 이름에 `credential`/`secret`이 들어간 파일, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `id_rsa*`, `id_ed25519*`, `.npmrc`, `.netrc`, `~/.ssh`, `~/.aws`, `~/.config/gcloud`.
+- 이 차단은 `.claude/settings.json`의 `permissions.deny`로 강제된다 (`Read`, `Edit`, `Bash` 규칙). 규칙을 삭제하거나 완화하지 않는다. 대상 파일을 추가할 때는 `AGENTS.md`와 `settings.json`을 함께 수정한다.
+- `.env.example`은 값이 없는 템플릿이므로 읽고 수정할 수 있다. 환경 변수 이름이 필요하면 `.env.example`을 참고한다.
+- `cat`, `printenv`, `env` 등 셸 명령이나 스크립트로 우회해서 읽지 않는다. `Bash` deny 패턴은 완전하지 않으므로 규칙 자체를 지켜야 한다.
+- 키 값이 필요한 작업(서버 실행 확인 등)은 사용자에게 `.env` 설정을 요청한다. 값을 대화에 붙여넣도록 요구하지 않는다.
+
 ## Project Context
 
 - AI로 React 컴포넌트를 생성하고 실시간 미리보기와 코드를 보여주는 도구.

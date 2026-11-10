@@ -1,5 +1,98 @@
 {
   "worktree": {
     "baseRef": "head"
+  },
+  "permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.development)",
+      "Read(**/.env.production)",
+      "Read(**/.env.test)",
+      "Read(**/.env.*.local)",
+      "Read(**/*credential*)",
+      "Read(**/*secret*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p12)",
+      "Read(**/*.pfx)",
+      "Read(**/id_rsa*)",
+      "Read(**/id_ed25519*)",
+      "Read(**/.npmrc)",
+      "Read(**/.netrc)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.config/gcloud/**)",
+
+      "Edit(**/.env)",
+      "Edit(**/.env.local)",
+      "Edit(**/.env.development)",
+      "Edit(**/.env.production)",
+      "Edit(**/.env.test)",
+      "Edit(**/.env.*.local)",
+      "Edit(**/*credential*)",
+      "Edit(**/*secret*)",
+      "Edit(**/*.pem)",
+      "Edit(**/*.key)",
+      "Edit(**/*.p12)",
+      "Edit(**/*.pfx)",
+      "Edit(**/id_rsa*)",
+      "Edit(**/id_ed25519*)",
+      "Edit(**/.npmrc)",
+      "Edit(**/.netrc)",
+      "Edit(~/.ssh/**)",
+      "Edit(~/.aws/**)",
+      "Edit(~/.config/gcloud/**)",
+
+      "Bash(* .env)",
+      "Bash(* .env *)",
+      "Bash(* .env.local*)",
+      "Bash(* .env.development*)",
+      "Bash(* .env.production*)",
+      "Bash(* .env.test*)",
+      "Bash(* *.env)",
+      "Bash(* *credential*)",
+      "Bash(* *secret*)",
+      "Bash(* *.pem*)",
+      "Bash(* *.key*)",
+      "Bash(* ~/.ssh*)",
+      "Bash(* ~/.aws*)",
+      "Bash(printenv*)",
+      "Bash(env)",
+      "Bash(env *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit*)",
+            "command": "bun run test >&2 || { echo '테스트 실패: 모든 테스트가 통과해야 commit 할 수 있습니다.' >&2; exit 2; }",
+            "timeout": 120,
+            "statusMessage": "commit 전 테스트 실행 중..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Edit(**/*.ts)",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"[TDD 리마인더 - .claude/rules/tdd.md, Rigid] 이 파일을 쓰거나 수정하기 전에 확인: (1) 비즈니스 로직/API/유틸/버그 수정이면 실패하는 테스트를 먼저 작성하고 bun run test로 실행해 실패(이유: 기능 미구현)를 확인했는가? (2) 하나의 동작 = 하나의 테스트. (3) 테스트가 요구하는 최소한의 코드만 작성(YAGNI). (4) 테스트보다 프로덕션 코드를 먼저 썼다면 그 코드를 삭제하고 RED부터 다시 시작(참고용 보관 금지). (5) 구현 후 신규/기존 테스트 전부 통과 확인. 순수 UI/타입/설정만 TDD 예외이며, 애매하면 적용 대상이다. 지금 RED 단계를 거쳤는지 먼저 답하고 진행하라.\"}}'",
+            "statusMessage": "TDD 규칙 리마인드 주입 중..."
+          },
+          {
+            "type": "command",
+            "if": "Edit(**/*.tsx)",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"[TDD 리마인더 - .claude/rules/tdd.md, Rigid] 이 파일을 쓰거나 수정하기 전에 확인: (1) 조건문/상태/분기/변환이 하나라도 있으면 순수 UI가 아니므로 TDD 대상이다. 실패하는 테스트를 먼저 작성하고 bun run test로 실행해 실패(이유: 기능 미구현)를 확인했는가? (2) 하나의 동작 = 하나의 테스트. (3) 테스트가 요구하는 최소한의 코드만 작성(YAGNI). (4) 테스트보다 프로덕션 코드를 먼저 썼다면 그 코드를 삭제하고 RED부터 다시 시작(참고용 보관 금지). (5) 구현 후 신규/기존 테스트 전부 통과 확인. 마크업/스타일만 있는 컴포넌트만 예외다. 지금 RED 단계를 거쳤는지 먼저 답하고 진행하라.\"}}'",
+            "statusMessage": "TDD 규칙 리마인드 주입 중..."
+          }
+        ]
+      }
+    ]
   }
 }
