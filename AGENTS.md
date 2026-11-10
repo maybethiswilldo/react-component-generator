@@ -53,5 +53,6 @@
 
 - 프로젝트 소개·실행 방법은 [README.md](./README.md)를 따른다. 여기에 반복하지 않는다.
 - 커밋 메시지: 한국어, `<type>: <요약>` 형식. type은 `feat`, `fix`, `refactor`, `chore`. 요약은 명사형, 마침표 없음. 상세는 `.claude/skills/commit/SKILL.md`.
+- PR 템플릿 언어: `ko`. `create-pr` 스킬은 `.claude/skills/create-pr/references/pr-template.ko.md`를 사용한다.
 - `git push`는 요청받았을 때만 수행한다.
 - Maintenance Policy: 이 파일의 규칙과 코드가 어긋나면(줄 번호 이동, 포트 변경, 새 프로바이더 추가 등) 작업 중 발견 즉시 AGENTS.md 업데이트를 제안한다.

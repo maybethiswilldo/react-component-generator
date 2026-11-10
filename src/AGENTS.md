@@ -27,7 +27,7 @@ Vite로 번들되는 React 19 프론트엔드. 프롬프트를 `/api/generate`�
 
 ## Local Golden Rules
 
-- API 키는 `App.tsx`의 `useState`에만 둔다 (`App.tsx:14`). `localStorage`/`sessionStorage`에 저장하거나 URL에 넣지 않는다. 프로바이더를 바꾸면 키를 비우는 동작도 유지한다 (`App.tsx:43`). 키는 `/api/generate` 요청 본문으로만 전송한다 (`hooks/useComponentGenerator.ts:26`).
+- API 키·Provider·프롬프트 히스토리·생성 컴포넌트는 `useLocalStorageState`로 `localStorage`(`rcg:*` 키, `utils/storage.ts`)에 유지한다. 사용자 요청에 따라 API 키 저장을 허용한 것이므로, 키를 URL에 넣거나 `sessionStorage`/쿠키 등 다른 곳에 중복 저장하지 않는다. 프로바이더를 바꾸면 키를 비우는 동작도 유지한다 (`App.tsx` `handleProviderChange`). 키는 `/api/generate` 요청 본문으로만 전송한다 (`hooks/useComponentGenerator.ts:26`).
 - `LiveProvider`에 `scope`를 넘기지 않는다 (`components/LivePreview.tsx:11`). AI가 생성한 코드가 앱 페이지 안에서 실행되므로, `apiKey` 등 앱 상태를 scope에 노출하면 생성 코드가 접근할 수 있다.
 - 미리보기 새로고침은 `key={previewKey}`로 `LivePreview`를 리마운트해서 구현한다 (`ComponentCard.tsx:33,74`). 애니메이션 컴포넌트를 처음 상태로 되돌리는 방식이므로 다른 방식으로 바꾸지 않는다.
 - 재생성도 `handleGenerate`를 거친다 (`App.tsx:193`). 키 확인이 재생성에도 적용되므로 `generate`를 직접 연결하지 않는다.
