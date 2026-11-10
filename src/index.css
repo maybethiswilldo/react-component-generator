@@ -1,0 +1,45 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  --desk: #8fb3c7;
+  --foreground: #000000;
+}
+
+body {
+  font-family: Galmuri14, 'Malgun Gothic', 'Apple SD Gothic Neo', ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  background-color: var(--desk);
+  /* 1비트 디더링 데스크톱 */
+  background-image: conic-gradient(
+    rgba(255, 255, 255, 0.22) 25%,
+    transparent 0 50%,
+    rgba(255, 255, 255, 0.22) 0 75%,
+    transparent 0
+  );
+  background-size: 4px 4px;
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: #000;
+  color: #fff;
+}
