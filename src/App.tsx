@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PromptInput } from './components/PromptInput';
 import { ComponentCard } from './components/ComponentCard';
+import { StreamingCard } from './components/StreamingCard';
 import { useComponentGenerator } from './hooks/useComponentGenerator';
 import { useLocalStorageState } from './hooks/useLocalStorageState';
 import {
@@ -31,7 +32,7 @@ function App() {
     anthropic: false,
     google: false,
   });
-  const { components, isLoading, error, generate, removeComponent, clearAll } =
+  const { components, isLoading, error, streaming, generate, removeComponent, clearAll } =
     useComponentGenerator();
 
   useEffect(() => {
@@ -186,17 +187,7 @@ function App() {
           </div>
         )}
 
-        {isLoading && (
-          <div className="window loading-card" role="status">
-            <div className="win-bar">
-              <h2 className="win-title">생성 중</h2>
-            </div>
-            <div className="loading-body">
-              <p>컴포넌트를 생성하고 있습니다...</p>
-              <div className="loading-bar" aria-hidden="true" />
-            </div>
-          </div>
-        )}
+        {streaming && <StreamingCard prompt={streaming.prompt} code={streaming.code} />}
 
         <div className="results-grid">
           {components.map((component) => (

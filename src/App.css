@@ -761,3 +761,25 @@ textarea:focus-visible {
     transform: none;
   }
 }
+
+/* ───────── 스트리밍 ───────── */
+.streaming-card {
+  margin-bottom: 32px;
+}
+
+.streaming-card .loading-bar {
+  margin-top: 0;
+  height: 10px;
+  border-width: 0 0 2px;
+}
+
+.code-block--streaming {
+  max-height: 480px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+.tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
