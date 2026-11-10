@@ -325,6 +325,12 @@ textarea:focus-visible {
   line-height: 1.7;
 }
 
+.prompt-error {
+  margin-top: 8px;
+  color: var(--red);
+  line-height: 1.6;
+}
+
 .prompt-textarea::placeholder {
   color: #6b6b6b;
 }

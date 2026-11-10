@@ -22,6 +22,28 @@ describe('PromptInput', () => {
     expect(onGenerate).toHaveBeenCalledWith('프로필 카드');
   });
 
+  it('500자를 넘기면 에러 메시지를 보여주고 생성 버튼이 비활성이다', async () => {
+    const user = userEvent.setup();
+    render(<PromptInput onGenerate={vi.fn()} isLoading={false} />);
+
+    await user.click(screen.getByRole('textbox'));
+    await user.paste('a'.repeat(501));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('500자 이하');
+    expect(screen.getByRole('button', { name: '컴포넌트 생성' })).toBeDisabled();
+  });
+
+  it('500자 이하면 에러 메시지가 없다', async () => {
+    const user = userEvent.setup();
+    render(<PromptInput onGenerate={vi.fn()} isLoading={false} />);
+
+    await user.click(screen.getByRole('textbox'));
+    await user.paste('a'.repeat(500));
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '컴포넌트 생성' })).toBeEnabled();
+  });
+
   it('로딩 중에는 생성 버튼이 비활성이고 "생성 중..." 을 보여준다', () => {
     render(<PromptInput onGenerate={vi.fn()} isLoading={true} />);
     expect(screen.getByRole('button', { name: '생성 중...' })).toBeDisabled();
